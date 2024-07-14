@@ -1,0 +1,30 @@
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Load customer data (replace 'data.csv' with your actual file path)
+data = pd.read_csv('data.csv')
+
+# Select relevant features from purchase history (e.g., total spent, categories purchased)
+purchase_features = ['feature1', 'feature2', 'feature3', ...]  # Replace with your feature names
+customer_data = data[purchase_features]
+
+# Standardize features (optional, but recommended for K-means)
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(customer_data)
+
+# Define the number of clusters (k) based on domain knowledge or experimentation
+k = 3  # Replace with the desired number of customer groups
+
+# Create and train the K-means model
+kmeans = KMeans(n_clusters=k, random_state=42)
+kmeans.fit(scaled_data)
+
+# Assign cluster labels to each customer
+customer_data['cluster'] = kmeans.labels_
+
+# Analyze the clusters (optional)
+# You can explore the characteristics of each cluster based on their purchase behavior
+
+print("Customer data with cluster labels:")
+print(customer_data.head())

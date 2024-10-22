@@ -1,0 +1,296 @@
+insertion selection-
+include <iostream> 
+#include <string.h> 
+using namespace std;
+class ItemSort { 
+ private: 
+ string items[50][2]; // Column 0 for ID, Column 1 for Name
+ int n;
+ 
+ public: 
+ void getData();
+ void insertionSort();
+ void selectionSort();
+ void display();
+};
+void ItemSort::getData() { 
+ cout << "Enter the number of items: ";
+ cin >> n;
+ cout << "\nEnter " << n << " items (ID and Name):" << endl;
+ for(int i = 0; i < n; i++) {
+ cout << "\nItem " << (i+1) << ":" << endl;
+ cout << "Enter ID: ";
+ cin >> items[i][0];
+ cout << "Enter Name: ";
+ cin >> items[i][1];
+ } 
+} 
+void ItemSort::insertionSort() { 
+ string keyID, keyName;
+ int i, j;
+ for(i = 1; i < n; i++) {
+ keyID = items[i][0];
+ keyName = items[i][1];
+ j = i - 1;
+ 
+ while(j >= 0 && items[j][1] > keyName) { // Sort based on name 
+ items[j + 1][0] = items[j][0]; // Move ID
+ items[j + 1][1] = items[j][1]; // Move name
+ j = j - 1;
+ } 
+ items[j + 1][0] = keyID;
+ items[j + 1][1] = keyName;
+ } 
+} 
+void ItemSort::selectionSort() { 
+ int i, j, min_idx;
+ string tempID, tempName;
+ 
+ for(i = 0; i < n-1; i++) {
+ min_idx = i;
+ for(j = i+1; j < n; j++) {
+ if(items[j][1] < items[min_idx][1]) // Sort based on name 
+ min_idx = j;
+ } 
+ if(min_idx != i) { 
+ // Swap IDs 
+ tempID = items[i][0];
+ items[i][0] = items[min_idx][0];
+ items[min_idx][0] = tempID;
+ 
+ // Swap Names 
+ tempName = items[i][1];
+ items[i][1] = items[min_idx][1];
+ items[min_idx][1] = tempName;
+ } 
+ } 
+} 
+void ItemSort::display() { 
+ cout << "\nSorted items are:" << endl;
+ cout << "\nID\tName" << endl;
+ cout << "-------------------" << endl;
+ for(int i = 0; i < n; i++) {
+ cout << items[i][0] << "\t" << items[i][1] << endl;
+ } 
+} 
+int main() { 
+ ItemSort obj;
+ int choice;
+ 
+ obj.getData();
+ 
+ do { 
+ cout << "\n-------- Menu --------" << endl;
+ cout << "1. Sort using Insertion Sort" << endl;
+ cout << "2. Sort using Selection Sort" << endl;
+ cout << "3. Display Items" << endl;
+ cout << "4. Exit" << endl;
+ cout << "Enter your choice: ";
+ cin >> choice;
+ 
+ switch(choice) { 
+ case 1: 
+ obj.insertionSort();
+ cout << "\nSorted using Insertion Sort!" << endl;
+ break;
+ 
+ case 2: 
+ obj.selectionSort();
+ cout << "\nSorted using Selection Sort!" << endl;
+ break;
+ 
+ case 3: 
+ obj.display();
+ break;
+ 
+ case 4: 
+ cout << "\nExiting program..." << endl;
+ break;
+ 
+ default: 
+ cout << "\nInvalid choice!" << endl;
+ } 
+ } while(choice != 4);
+
+
+
+merge quick sort
+#include <iostream> 
+using namespace std; 
+class SorƟng { 
+private: 
+ int *arr; 
+ int n; 
+ 
+ // Helper funcƟons for Quick Sort
+ int parƟƟon(int low, int high); 
+ void quickSortRecursive(int low, int high); 
+ 
+ // Helper funcƟons for Merge Sort
+ void merge(int leŌ, int mid, int right); 
+ void mergeSortRecursive(int leŌ, int right); 
+ 
+public: 
+ SorƟng(int size) { 
+ n = size; 
+ arr = new int[n]; 
+ } 
+ 
+ ~SorƟng() { 
+ delete[] arr; 
+ } 
+ 
+ void getData(); 
+ void quickSort(); 
+ void mergeSort(); 
+ void display(); 
+}; 
+void SorƟng::getData() { 
+ cout << "Enter " << n << " integers:" << endl; 
+ for(int i = 0; i < n; i++) { 
+ cout << "Enter element " << (i+1) << ": "; 
+ cin >> arr[i]; 
+ } 
+} 
+void SorƟng::display() { 
+ cout << "Array elements: "; 
+ for(int i = 0; i < n; i++) { 
+ cout << arr[i] << " "; 
+ } 
+ cout << endl; 
+} 
+// Quick Sort ImplementaƟon
+int SorƟng::parƟƟon(int low, int high) { 
+ int pivot = arr[high]; 
+ int i = low - 1; 
+ 
+ for(int j = low; j < high; j++) { 
+ if(arr[j] <= pivot) { 
+ i++; 
+ swap(arr[i], arr[j]); 
+ } 
+ } 
+ swap(arr[i + 1], arr[high]); 
+ return i + 1; 
+} 
+void SorƟng::quickSortRecursive(int low, int high) { 
+ if(low < high) { 
+ int pi = parƟƟon(low, high); 
+ quickSortRecursive(low, pi - 1); 
+ quickSortRecursive(pi + 1, high); 
+ } 
+} 
+void SorƟng::quickSort() { 
+ quickSortRecursive(0, n-1); 
+} 
+// Merge Sort ImplementaƟon
+void SorƟng::merge(int leŌ, int mid, int right) { 
+ int n1 = mid - leŌ + 1; 
+ int n2 = right - mid; 
+ 
+ // Create temporary arrays 
+ int *L = new int[n1]; 
+ int *R = new int[n2]; 
+ 
+ // Copy data to temporary arrays 
+ for(int i = 0; i < n1; i++) 
+ L[i] = arr[leŌ + i]; 
+ for(int j = 0; j < n2; j++) 
+ R[j] = arr[mid + 1 + j]; 
+ 
+ // Merge the temporary arrays back 
+ int i = 0, j = 0, k = leŌ; 
+ 
+ while(i < n1 && j < n2) { 
+ if(L[i] <= R[j]) { 
+ arr[k] = L[i]; 
+ i++; 
+ } 
+ else { 
+ arr[k] = R[j]; 
+ j++; 
+ } 
+ k++; 
+ } 
+ 
+ // Copy remaining elements of L[] 
+ while(i < n1) { 
+ arr[k] = L[i]; 
+ i++; 
+ k++; 
+ } 
+ 
+ // Copy remaining elements of R[] 
+ while(j < n2) { 
+ arr[k] = R[j]; 
+ j++; 
+ k++; 
+ } 
+ 
+ delete[] L; 
+ delete[] R; 
+} 
+void SorƟng::mergeSortRecursive(int leŌ, int right) { 
+ if(leŌ < right) { 
+ int mid = leŌ + (right - leŌ) / 2; 
+ 
+ mergeSortRecursive(leŌ, mid); 
+ mergeSortRecursive(mid + 1, right); 
+ 
+ merge(leŌ, mid, right); 
+ } 
+} 
+void SorƟng::mergeSort() { 
+ mergeSortRecursive(0, n-1); 
+} 
+int main() { 
+ int size; 
+ cout << "Enter the size of array: "; 
+ cin >> size; 
+ 
+ SorƟng sort(size); 
+ int choice; 
+ 
+ sort.getData(); 
+ cout << "\nOriginal "; 
+ sort.display(); 
+ 
+ do { 
+ cout << "\n-------- Menu --------" << endl; 
+ cout << "1. Quick Sort" << endl; 
+ cout << "2. Merge Sort" << endl; 
+ cout << "3. Display Array" << endl; 
+ cout << "4. Exit" << endl; 
+ cout << "Enter your choice: "; 
+ cin >> choice; 
+ 
+ switch(choice) { 
+ case 1: 
+ sort.quickSort(); 
+ cout << "\nArray sorted using Quick Sort!" << endl; 
+ cout << "Sorted "; 
+ sort.display(); 
+ break; 
+ 
+ case 2: 
+ sort.mergeSort(); 
+ cout << "\nArray sorted using Merge Sort!" << endl; 
+ cout << "Sorted "; 
+ sort.display(); 
+ break; 
+ 
+ case 3: 
+ sort.display(); 
+ break; 
+ 
+ case 4: 
+ cout << "\nExiƟng program..." << endl; 
+ break; 
+ 
+ default: 
+ cout << "\nInvalid choice!" << endl; 
+ } 
+ } while(choice != 4); 
+ 
+ return 0; 
+} 

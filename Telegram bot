@@ -1,0 +1,124 @@
+import os
+import openai
+import gspread
+import random
+from oauth2client.service_account import ServiceAccountCredentials
+from telethon import TelegramClient, events
+
+# ✅ Load API keys securely
+openai.api_key = #Your api here
+ # Set this in your environment
+
+if not openai.api_key:
+    raise ValueError("⚠️ OpenAI API Key is missing! Set it using an environment variable.")
+
+# 🔹 Telegram API credentials
+api_id = # Replace with your actual API ID
+api_hash = # Replace with your actual API hash
+phone = # Your Telegram phone number
+
+# 🔹 Google Sheets Setup
+GOOGLE_SHEET_URL = Your google sheet share link here
+GOOGLE_CREDENTIALS_FILE = your saved path here
+# ✅ Authenticate with Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_FILE, scope)
+client_gs = gspread.authorize(creds)
+spreadsheet = client_gs.open_by_url(GOOGLE_SHEET_URL)
+sheet = spreadsheet.sheet1
+
+# ✅ Ensure column headers exist
+if not sheet.row_values(1):
+    sheet.append_row(["Name", "Phone Number", "Email"])
+
+# ✅ Initialize Telegram client
+client = TelegramClient('my_session', api_id, api_hash)
+
+# ✅ Dictionary to track user responses
+user_data = {}
+otp_store = {}
+
+def generate_otp():
+    """Generates a 6-digit OTP"""
+    return str(random.randint(100000, 999999))
+
+def log_to_google_sheets(user_id):
+    """Logs user data to Google Sheets"""
+    user_info = user_data.get(user_id, {})
+    if "name" in user_info and "phone" in user_info and "email" in user_info:
+        sheet.append_row([user_info["name"], user_info["phone"], user_info["email"]])
+        print("✅ User data logged to Google Sheets:", user_info)
+
+def get_openai_response(user_message):
+    """Gets response from OpenAI's GPT-4 (Fixed for OpenAI v1.0.0+)"""
+    response = openai.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": 
+                "You are a professional and friendly AI receptionist for DigiWork Online Services & Consultancy LLP. "
+                 "at starting only Start with: 'Hey, welcome to DigiWork! How can I help you today?'  "
+                 "You provide information strictly about DigiWork’s services, including custom website development, "
+                 "workflow automation, scalable solutions, IT consulting, cybersecurity, AI, and automation. "
+                 "You also share details about notable projects (LearnPro, TrackEasy, AutoMark), office location "
+                 "(Off No 105, Pinnacle Pride, Sadashiv Peth, Pune, Maharashtra 411030), office hours (9:00 AM to 7:00 PM), "
+                 "and contact details (+91 7499518167, connect@digiworksoft.in). "
+                 "If a client wants to make an inquiry, direct them to: https://www.digiworksoft.in/#contact. "
+                 "If a user asks about anything unrelated to DigiWork, politely refuse to answer. Example response: "
+                 "'Sorry, I can only provide information about DigiWork Online Services & Consultancy LLP. "
+            },
+            {"role": "user", "content": user_message}
+        ]
+    )
+    return response.choices[0].message.content.strip()  # ✅ Fixed response format
+
+@client.on(events.NewMessage)
+async def handle_new_message(event):
+    """Handles new messages from users"""
+    user_id = event.sender_id
+    message_text = event.raw_text.strip()
+    sender = await event.get_sender()
+    telegram_phone = sender.phone
+
+    if telegram_phone:
+        telegram_phone = str(telegram_phone).lstrip("+")
+    
+    if user_id not in user_data:
+        user_data[user_id] = {}
+
+    if "name" not in user_data[user_id]:
+        user_data[user_id]["name"] = message_text
+        await event.reply(f"Hi {message_text}, what is your phone number?")
+        return
+
+    elif "phone" not in user_data[user_id]:
+        if message_text == telegram_phone:
+            user_data[user_id]["phone"] = message_text
+            otp = generate_otp()
+            otp_store[user_id] = otp
+            await event.reply(f"✅ Phone number verified! Your OTP is: {otp}. Please enter it to verify your phone number.")
+        else:
+            await event.reply(f"❌ The phone number must match your registered Telegram number: +{telegram_phone}. Please enter the correct number.")
+        return
+
+    elif "otp_verified" not in user_data[user_id]:
+        if message_text == otp_store.get(user_id, ""):
+            user_data[user_id]["otp_verified"] = True
+            await event.reply("✅ Phone number verified successfully! Now, please provide your email address.")
+        else:
+            await event.reply("❌ Invalid OTP! Please try again.")
+        return
+
+    elif "email" not in user_data[user_id]:
+        user_data[user_id]["email"] = message_text
+        log_to_google_sheets(user_id)
+        await event.reply("✅ Your details are saved. How can I assist you today?")
+        return
+
+    # ✅ Process OpenAI response
+    openai_response = get_openai_response(message_text)
+    await event.reply(openai_response)
+
+# ✅ Start Telegram bot
+client.start(phone)
+print("🚀 Bot is running...")
+client.run_until_disconnected()
